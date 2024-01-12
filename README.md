@@ -23,3 +23,9 @@ go install github.com/cortesi/modd/cmd/modd@latest
 ```bash
 go get github.com/lmittmann/tint
 ```
+
+[viper - yml конфигурация](https://github.com/spf13/viper)
+
+```bash
+go get github.com/spf13/viper
+```
