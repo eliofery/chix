@@ -17,3 +17,9 @@ make watch
 ```bash
 go install github.com/cortesi/modd/cmd/modd@latest
 ```
+
+[tint - цветной лог](https://github.com/lmittmann/tint)
+
+```bash
+go get github.com/lmittmann/tint
+```
