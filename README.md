@@ -80,3 +80,13 @@ go get github.com/joho/godotenv
 ```bash
 go get github.com/mattn/go-sqlite3
 ```
+
+---
+
+[pgx - база данных postgres](https://github.com/jackc/pgx)  
+[pgerrcode - коды ошибок postgres](https://github.com/jackc/pgerrcode)
+
+```bash
+go get github.com/jackc/pgx/v5
+go get github.com/jackc/pgerrcode
+```
