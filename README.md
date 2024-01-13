@@ -90,3 +90,11 @@ go get github.com/mattn/go-sqlite3
 go get github.com/jackc/pgx/v5
 go get github.com/jackc/pgerrcode
 ```
+
+---
+
+[validator - валидация данных](https://github.com/go-playground/validator)
+
+```bash
+go get github.com/go-playground/validator/v10
+```
