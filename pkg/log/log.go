@@ -38,8 +38,6 @@ func getLevel() slog.Level {
 	case utils.Local:
 		level = slog.LevelDebug
 	case utils.Prod:
-		level = slog.LevelWarn
-	default:
 		level = slog.LevelInfo
 	}
 
