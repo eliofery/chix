@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/pkg/chix"
 	"github.com/eliofery/go-chix/pkg/config"
 	"github.com/eliofery/go-chix/pkg/config/viperr"
@@ -24,6 +25,13 @@ func main() {
 	valid := validate.New(validator.New(), ru.New(), en.New())
 	tokenManager := jwt.NewTokenManager(conf)
 	_ = tokenManager
+
+	dao := repository.NewDAO(db.Conn)
+	users, err := dao.NewUserQuery().GetUsers()
+	if err != nil {
+		log.Error("Не удалось получить пользователей", slog.String("err", err.Error()))
+	}
+	log.Info("Пользователи", slog.Any("users", users))
 
 	chix.NewApp(db, conf).
 		UseExtends(valid).

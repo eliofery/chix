@@ -2,9 +2,17 @@
 
 **Chix** - представляет собой изящный REST API веб-фреймворк, основанный на простом и функциональном HTTP маршрутизаторе Chi. Главной целью Chix является создание легковесного фреймворка, предоставляющего только необходимые компоненты для эффективной работы с проектами REST API. Встроенная Луковичная архитектура облегчает поддержку кода, его масштабирование и тестирование, делая приложение гибким к будущим изменениям.
 
-## Команды проекта
+## Запуск проекта
 
 Перечень доступных команд для развертывания проекта.
+
+---
+
+Запуск Postgres базы данной.
+
+```bash
+docker compose up -d
+```
 
 ---
 
@@ -33,6 +41,44 @@ go run ./cmd/rest/main.go local
 
 ```bash
 go run ./cmd/rest/main.go prod
+```
+
+## Миграция
+
+### Создание миграции
+
+```bash
+# Создание миграции
+goose -dir ./internal/migration create <имя миграции> sql
+
+# Переименовывает миграции с формата даты создания в порядковый номер создания
+# 20250104093011_<имя миграции>.sql -> 00001_<имя миграции>.sql
+goose -dir ./internal/migration fix
+```
+
+### Статус миграций
+
+```bash
+# Вариант 1 (длинный)
+goose -dir internal/migration postgres "postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable" status
+
+# Вариант 2 (короткий)
+export GOOSE_DRIVER=postgres
+export GOOSE_DBSTRING=postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable
+
+goose -dir internal/migration status
+```
+
+### Выполнить миграцию
+
+```bash
+goose -dir internal/migration up
+```
+
+### Откат миграции
+
+```bash
+goose -dir internal/migration down
 ```
 
 ## Используемые пакеты
@@ -142,40 +188,10 @@ go get github.com/go-chi/cors
 go get github.com/fatih/color
 ```
 
-## Миграция
+---
 
-### Создание миграции
-
-```bash
-# Создание миграции
-goose -dir ./internal/migration create <имя миграции> sql
-
-# Переименовывает миграции с формата даты создания в порядковый номер создания
-# 20250104093011_<имя миграции>.sql -> 00001_<имя миграции>.sql
-goose -dir ./internal/migration fix
-```
-
-### Проверка выполненных миграций 
+[squirrel - sql query builder](https://github.com/Masterminds/squirrel)
 
 ```bash
-# Вариант 1 (длинный)
-goose -dir internal/migration postgres "postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable" status
-
-# Вариант 2 (короткий)
-export GOOSE_DRIVER=postgres
-export GOOSE_DBSTRING=postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable
-
-goose -dir internal/migration status
-```
-
-### Выполнить миграцию
-
-```bash
-goose -dir internal/migration up
-```
-
-### Откат миграции
-
-```bash
-goose -dir internal/migration down
+go get github.com/Masterminds/squirrel
 ```
