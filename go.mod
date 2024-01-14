@@ -3,6 +3,10 @@ module github.com/eliofery/go-chix
 go 1.21.5
 
 require (
+	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/universal-translator v0.18.1
+	github.com/go-playground/validator/v10 v10.17.0
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/joho/godotenv v1.5.1
 	github.com/lmittmann/tint v1.0.4
@@ -13,9 +17,6 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.17.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

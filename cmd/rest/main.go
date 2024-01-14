@@ -5,6 +5,7 @@ import (
 	"github.com/eliofery/go-chix/pkg/config/viperr"
 	"github.com/eliofery/go-chix/pkg/database"
 	"github.com/eliofery/go-chix/pkg/database/postgres"
+	"github.com/eliofery/go-chix/pkg/jwt"
 	"github.com/eliofery/go-chix/pkg/log"
 	"github.com/eliofery/go-chix/pkg/utils"
 	"github.com/eliofery/go-chix/pkg/validate"
@@ -22,4 +23,6 @@ func main() {
 	_ = db
 	valid := validate.New(validator.New(), ru.New(), en.New())
 	_ = valid
+	tokenManager := jwt.NewTokenManager(conf)
+	_ = tokenManager
 }

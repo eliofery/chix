@@ -98,3 +98,11 @@ go get github.com/jackc/pgerrcode
 ```bash
 go get github.com/go-playground/validator/v10
 ```
+
+---
+
+[jwt - токен](https://github.com/golang-jwt/jwt)
+
+```bash
+go get -u github.com/golang-jwt/jwt/v5
+```
