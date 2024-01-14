@@ -106,3 +106,13 @@ go get github.com/go-playground/validator/v10
 ```bash
 go get -u github.com/golang-jwt/jwt/v5
 ```
+
+---
+
+[chi - роутер](https://github.com/go-chi/chi)  
+[cors - защита межсайтового взаимодействия](https://github.com/go-chi/cors)
+
+```bash
+go get -u github.com/go-chi/chi/v5
+go get github.com/go-chi/cors
+```

@@ -3,6 +3,7 @@ module github.com/eliofery/go-chix
 go 1.21.5
 
 require (
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.17.0
