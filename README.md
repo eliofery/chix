@@ -134,6 +134,14 @@ go get -u github.com/go-chi/chi/v5
 go get github.com/go-chi/cors
 ```
 
+---
+
+[color - цветной шрифт в терминале](https://github.com/fatih/color)
+
+```bash
+go get github.com/fatih/color
+```
+
 ## Миграция
 
 ### Создание миграции

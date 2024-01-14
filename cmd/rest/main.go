@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/eliofery/go-chix/pkg/chix"
 	"github.com/eliofery/go-chix/pkg/config"
 	"github.com/eliofery/go-chix/pkg/config/viperr"
 	"github.com/eliofery/go-chix/pkg/database"
@@ -20,9 +21,13 @@ func main() {
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))
-	db.MigrateMust()
 	valid := validate.New(validator.New(), ru.New(), en.New())
-	_ = valid
 	tokenManager := jwt.NewTokenManager(conf)
 	_ = tokenManager
+
+	chix.NewApp(db, conf).
+		UseExtends(valid).
+		UseMiddlewares().
+		UseRoutes().
+		MustRun()
 }
