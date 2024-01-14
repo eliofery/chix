@@ -20,7 +20,7 @@ func main() {
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))
-	_ = db
+	db.MigrateMust()
 	valid := validate.New(validator.New(), ru.New(), en.New())
 	_ = valid
 	tokenManager := jwt.NewTokenManager(conf)

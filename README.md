@@ -93,6 +93,23 @@ go get github.com/jackc/pgerrcode
 
 ---
 
+[mysql - база данных mysql](https://github.com/go-sql-driver/mysql)
+
+```bash
+go get github.com/go-sql-driver/mysql
+```
+
+---
+
+[goose - миграция базы данных](https://github.com/pressly/goose)
+
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+go get github.com/pressly/goose/v3
+```
+
+---
+
 [validator - валидация данных](https://github.com/go-playground/validator)
 
 ```bash
@@ -115,4 +132,42 @@ go get -u github.com/golang-jwt/jwt/v5
 ```bash
 go get -u github.com/go-chi/chi/v5
 go get github.com/go-chi/cors
+```
+
+## Миграция
+
+### Создание миграции
+
+```bash
+# Создание миграции
+goose -dir ./internal/migration create <имя миграции> sql
+
+# Переименовывает миграции с формата даты создания в порядковый номер создания
+# 20250104093011_<имя миграции>.sql -> 00001_<имя миграции>.sql
+goose -dir ./internal/migration fix
+```
+
+### Проверка выполненных миграций 
+
+```bash
+# Вариант 1 (длинный)
+goose -dir internal/migration postgres "postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable" status
+
+# Вариант 2 (короткий)
+export GOOSE_DRIVER=postgres
+export GOOSE_DBSTRING=postgresql://root:123456@127.0.0.1:5432/pgdb?sslmode=disable
+
+goose -dir internal/migration status
+```
+
+### Выполнить миграцию
+
+```bash
+goose -dir internal/migration up
+```
+
+### Откат миграции
+
+```bash
+goose -dir internal/migration down
 ```
