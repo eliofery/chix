@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/eliofery/go-chix/internal/app/controller"
+	"github.com/eliofery/go-chix/internal/app/middleware"
 	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/internal/app/service"
 	"github.com/eliofery/go-chix/internal/route"
@@ -37,7 +38,9 @@ func main() {
 
 	chix.NewApp(db, conf).
 		UseExtends(valid).
-		UseMiddlewares().
+		UseMiddlewares(
+			middleware.Cors(conf),
+		).
 		UseRoutes(
 			routes.ErrorRoute,
 			routes.UserRoute,
