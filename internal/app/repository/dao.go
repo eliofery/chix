@@ -10,6 +10,7 @@ var defaultFormat = squirrel.Dollar
 
 // DAO интерфейс для обращения к БД
 type DAO interface {
+	NewAuthQuery() AuthQuery // NewAuthQuery конструктор для запросов связанных с авторизацией
 	NewUserQuery() UserQuery // NewAuthQuery конструктор для запросов связанных с авторизацией
 }
 
@@ -27,6 +28,13 @@ func NewDAO(db *sql.DB) DAO {
 // queryBuilder создание запросов в postgres базу данных
 func (d *dao) queryBuilder() squirrel.StatementBuilderType {
 	return squirrel.StatementBuilder.PlaceholderFormat(defaultFormat).RunWith(d.db)
+}
+
+// NewAuthQuery конструктор для запросов связанных с авторизацией
+func (d *dao) NewAuthQuery() AuthQuery {
+	log.Debug("Инициализация AuthQuery")
+
+	return &authQuery{db: d.db, builder: d.queryBuilder()}
 }
 
 // NewUserQuery конструктор для запросов связанных с пользователями

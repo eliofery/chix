@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/eliofery/go-chix/internal/app/controller"
 	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/internal/app/service"
 	"github.com/eliofery/go-chix/pkg/chix"
@@ -25,14 +26,13 @@ func main() {
 	db := database.MustConnect(postgres.New(conf))
 	valid := validate.New(validator.New(), ru.New(), en.New())
 	tokenManager := jwt.NewTokenManager(conf)
-	_ = tokenManager
 
 	dao := repository.NewDAO(db.Conn)
-	users, err := service.NewUserService(dao).GetUsers()
-	if err != nil {
-		log.Error("Не удалось получить пользователей", slog.String("err", err.Error()))
-	}
-	log.Info("Список пользователей", slog.Any("users", users))
+	handler := controller.NewServiceController(
+		service.NewAuthService(dao, tokenManager),
+		service.NewUserService(dao),
+	)
+	_ = handler
 
 	chix.NewApp(db, conf).
 		UseExtends(valid).
