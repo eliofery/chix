@@ -17,10 +17,10 @@ func Cors(conf config.Config) chix.HandlerNext {
 
 	url := fmt.Sprintf(
 		"%s://%s:%s",
-		conf.Get("server.protocol"), conf.Get("server.url"), conf.Get("server.port"),
+		conf.Get("http.protocol"), conf.Get("http.url"), conf.Get("http.port"),
 	)
 
-	maxAge, ok := conf.GetAny("server.cors.maxage").(int)
+	maxAge, ok := conf.GetAny("http.cors.maxage").(int)
 	if !ok {
 		maxAge = defaultCorsMaxAge
 	}

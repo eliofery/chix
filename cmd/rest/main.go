@@ -18,11 +18,10 @@ import (
 	"github.com/go-playground/locales/en"
 	"github.com/go-playground/locales/ru"
 	"github.com/go-playground/validator/v10"
-	"log/slog"
 )
 
 func main() {
-	log.Info("Используемое окружение", slog.String("env", utils.GetEnv()))
+	utils.PrintEnv(log.InitLog())
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))

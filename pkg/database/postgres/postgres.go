@@ -32,20 +32,20 @@ type postgres struct {
 
 // New конструктор Postgres
 func New(config config.Config) Postgres {
-	log.Debug("Инициализация базы данных postgres")
+	log.Debug("Инициализация базы данных Postgres")
 
-	port, err := strconv.Atoi(config.Get("POSTGRES_PORT"))
+	port, err := strconv.Atoi(config.Get("postgres.port"))
 	if err != nil {
 		port = portDefault
 	}
 
 	return &postgres{
-		Host:     config.Get("POSTGRES_HOST"),
+		Host:     config.Get("postgres.host"),
 		Port:     port,
-		User:     config.Get("POSTGRES_USER"),
-		Password: config.Get("POSTGRES_PASSWORD"),
-		Database: config.Get("POSTGRES_DATABASE"),
-		SSLMode:  config.Get("POSTGRES_SSLMODE"),
+		User:     config.Get("postgres.user"),
+		Password: config.Get("postgres.password"),
+		Database: config.Get("postgres.database"),
+		SSLMode:  config.Get("postgres.sslmode"),
 	}
 }
 

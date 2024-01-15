@@ -126,12 +126,12 @@ func (a *App) registerRoutes(r *Router, routes []func(router *Router)) {
 
 // MustListen регистрация маршрутов
 func (a *App) listen(r *Router) error {
-	port := a.config.Get("SERVER_PORT")
+	port := a.config.Get("http.port")
 	if port == "" {
 		port = portDefault
 	}
 
-	url := a.config.Get("SERVER_URL")
+	url := a.config.Get("http.url")
 	if url == "" {
 		url = urlDefault
 	}

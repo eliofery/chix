@@ -1,6 +1,9 @@
 package utils
 
-import "os"
+import (
+	"log/slog"
+	"os"
+)
 
 const (
 	Local = "local"
@@ -18,4 +21,9 @@ func GetEnv() string {
 	}
 
 	return Local
+}
+
+// PrintEnv выводит используемое окружение в лог
+func PrintEnv(log *slog.Logger) {
+	log.Info("Используемое окружение", slog.String("env", GetEnv()))
 }

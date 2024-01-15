@@ -25,7 +25,7 @@ type goDotEnv struct {
 
 // New конструктор goDotEnv
 func New(configName string) GoDotEnv {
-	log.Debug("инициализация конфигурации goDotEnv")
+	log.Debug("инициализация конфигурации GoDotEnv")
 
 	configName = fmt.Sprintf("%s.%s", configName, defaultConfigType)
 
@@ -59,7 +59,7 @@ func (g *goDotEnv) GetAny(key string) any {
 }
 
 // Formatter изменяет строку под конфигурацию
-// Пример: server.port -> SERVER_PORT
+// Пример: http.port -> HTTP_PORT
 func formatter(key string) string {
 	key = strings.ToUpper(key)
 	key = strings.ReplaceAll(key, ".", "_")

@@ -31,7 +31,7 @@ type viperr struct {
 
 // New конструктор viperr
 func New(configName string, configPaths ...string) Viperr {
-	log.Debug("Инициализация конфигурации viperr")
+	log.Debug("Инициализация конфигурации Viperr")
 
 	paths := []string{defaultConfigPath}
 	if len(configPaths) > 0 {
@@ -97,7 +97,7 @@ func (v *viperr) GetAny(key string) any {
 }
 
 // Formatter изменяет строку под конфигурацию
-// Пример: SERVER_PORT -> server.port
+// Пример: HTTP_PORT -> http.port
 func formatter(key string) string {
 	key = strings.ToLower(key)
 	key = strings.ReplaceAll(key, "_", ".")
