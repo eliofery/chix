@@ -4,6 +4,7 @@ import (
 	"github.com/eliofery/go-chix/internal/app/controller"
 	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/internal/app/service"
+	"github.com/eliofery/go-chix/internal/route"
 	"github.com/eliofery/go-chix/pkg/chix"
 	"github.com/eliofery/go-chix/pkg/config"
 	"github.com/eliofery/go-chix/pkg/config/viperr"
@@ -32,11 +33,14 @@ func main() {
 		service.NewAuthService(dao, tokenManager),
 		service.NewUserService(dao),
 	)
-	_ = handler
+	routes := route.NewRouter(handler)
 
 	chix.NewApp(db, conf).
 		UseExtends(valid).
 		UseMiddlewares().
-		UseRoutes().
+		UseRoutes(
+			routes.ErrorRoute,
+			routes.UserRoute,
+		).
 		MustRun()
 }
