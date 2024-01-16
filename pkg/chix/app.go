@@ -29,7 +29,7 @@ type key string
 type App struct {
 	config      config.Config
 	db          *database.DB
-	middlewares []HandlerNext
+	middlewares []HandlerCtx
 	routes      []func(router *Router)
 	validate    Validate
 }
@@ -61,25 +61,19 @@ func (a *App) UseExtends(extends ...any) *App {
 }
 
 // UseMiddlewares использование промежуточное программное обеспечение
-func (a *App) UseMiddlewares(injections ...any) *App {
+func (a *App) UseMiddlewares(middlewares ...HandlerCtx) *App {
 	log.Debug("Регистрация middlewares")
 
-	for _, injection := range injections {
-		if middleware, ok := injection.(HandlerNext); ok {
-			a.middlewares = append(a.middlewares, middleware)
-		}
-	}
+	a.middlewares = append(a.middlewares, middlewares...)
 
 	return a
 }
 
 // UseRoutes использование маршрутов
-func (a *App) UseRoutes(injections ...func(router *Router)) *App {
+func (a *App) UseRoutes(routes ...func(router *Router)) *App {
 	log.Debug("Регистрация маршрутов")
 
-	for _, route := range injections {
-		a.routes = append(a.routes, route)
-	}
+	a.routes = append(a.routes, routes...)
 
 	return a
 }
@@ -111,10 +105,8 @@ func (a *App) MustRun() {
 }
 
 // RegisterMiddlewares регистрация промежуточного программного обеспечения
-func (a *App) registerMiddlewares(r *Router, middlewares []HandlerNext) {
-	for _, middleware := range middlewares {
-		r.Use(middleware)
-	}
+func (a *App) registerMiddlewares(r *Router, middlewares []HandlerCtx) {
+	r.Use(middlewares...)
 }
 
 // RegisterRoutes регистрация маршрутов

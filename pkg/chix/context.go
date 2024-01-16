@@ -16,20 +16,26 @@ type Map map[string]any
 // Ctx контекст предоставляемый в обработчик
 type Ctx struct {
 	context.Context
-	Validate
 	http.ResponseWriter
 	*http.Request
+	Validate
+	NextHandler http.Handler
 
 	status int
 }
 
 // NewCtx создание контекста
-func NewCtx(ctx context.Context, validate Validate) *Ctx {
+func NewCtx(
+	w http.ResponseWriter,
+	r *http.Request,
+	validate Validate,
+) *Ctx {
 	return &Ctx{
-		Context:        ctx,
+		Context:        r.Context(),
+		ResponseWriter: w,
+		Request:        r,
 		Validate:       validate,
-		ResponseWriter: ResponseWriter(ctx),
-		Request:        Request(ctx),
+		NextHandler:    NextHandler(r.Context()),
 
 		status: http.StatusOK,
 	}
@@ -41,9 +47,13 @@ func (ctx *Ctx) Status(status int) *Ctx {
 	return ctx
 }
 
+func (ctx *Ctx) Header(key, value string) {
+	ctx.ResponseWriter.Header().Set(key, value)
+}
+
 // ContentType установка типа контента
 func (ctx *Ctx) ContentType(ct string) *Ctx {
-	ctx.ResponseWriter.Header().Set("Content-Type", ct)
+	ctx.Header("Content-Type", ct)
 	return ctx
 }
 
@@ -80,6 +90,13 @@ func (ctx *Ctx) JSON(data Map) error {
 		log.Error("Не удалось сформировать json", slog.String("err", err.Error()))
 		return err
 	}
+
+	return nil
+}
+
+// Next обработка следующего обработчика
+func (ctx *Ctx) Next() error {
+	ctx.NextHandler.ServeHTTP(ctx.ResponseWriter, ctx.Request)
 
 	return nil
 }

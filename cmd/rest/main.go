@@ -57,6 +57,7 @@ func main() {
 		UseExtends(valid).
 		UseMiddlewares(
 			middleware.Cors(conf),
+			middleware.Example(),
 		).
 		UseRoutes(
 			routes.ErrorRoute,

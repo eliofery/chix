@@ -9,10 +9,10 @@ import (
 // GetUsers получение всех пользователей
 func (c ServiceController) GetUsers(ctx *chix.Ctx) error {
 	var user dto.User
-	if err := ctx.Decode(&user, "fr"); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return err
-	}
+	//if err := ctx.Decode(&user, "fr"); err != nil {
+	//	ctx.Status(http.StatusBadRequest)
+	//	return err
+	//}
 
 	users, err := c.userService.GetUsers()
 	if err != nil {
