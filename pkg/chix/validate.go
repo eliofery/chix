@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/locales/ru"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	ru_translations "github.com/go-playground/validator/v10/translations/ru"
 	"log/slog"
 	"reflect"
 	"strings"
@@ -17,6 +18,10 @@ const (
 	defaultTagName = "name"
 )
 
+var (
+	defaultLanguage = ru.New()
+)
+
 // CustomValidate пользовательская валидация
 type CustomValidate struct {
 	Tag     string
@@ -24,38 +29,50 @@ type CustomValidate struct {
 	Message map[string]string
 }
 
-// LanguageProcessor функции перевода
-type LanguageProcessor map[string]func(v *validator.Validate, trans ut.Translator) error
+// DefaultTranslations функции перевода
+type DefaultTranslations map[string]func(v *validator.Validate, trans ut.Translator) error
 
 // Validate валидация данных
 type Validate interface {
-	Validation(data any, langOptions ...string) []error             // Валидация входных данных
-	RegisterTagName(name ...string) Validate                        // Регистрация имени поля в структуре данных
-	RegisterLanguages(translators ...locales.Translator) Validate   // Регистрация переводов
+	Validation(data any, langOption ...string) []error              // Валидация входных данных
+	RegisterTagName(name string) Validate                           // Регистрация имени поля в структуре данных
+	RegisterLocales(translators ...locales.Translator) Validate     // Регистрация переводов
 	RegisterValidations(customValidates ...CustomValidate) Validate // Регистрация пользовательских валидации
-	RegisterLanguagesProcess(lp LanguageProcessor) Validate         // Регистрация функций перевода
+	RegisterTranslations(dt DefaultTranslations) Validate           // Регистрация функций перевода
 }
 
 type validate struct {
 	*validator.Validate                                                                   // Validate Валидатор
-	Translators         []locales.Translator                                              // Translators переводы
+	Locales             []locales.Translator                                              // Locales переводы
 	Validations         []CustomValidate                                                  // Validations пользовательские валидации
-	LanguageProcessors  map[string]func(v *validator.Validate, trans ut.Translator) error // LanguageProcessors функции перевода
+	Translations        map[string]func(v *validator.Validate, trans ut.Translator) error // Translations функции перевода
 }
 
 // NewValidate создание валидации
 func NewValidate(v *validator.Validate) Validate {
 	log.Debug("Инициализация валидации")
 
-	return &validate{
-		Validate: v,
-	}
+	var vd validate
+	vd.Validate = v
+
+	vd.RegisterTagName(defaultTagName)
+	vd.RegisterLocales(defaultLanguage)
+	vd.RegisterTranslations(DefaultTranslations{
+		"ru": ru_translations.RegisterDefaultTranslations,
+	})
+
+	return &vd
 }
 
 // Validation валидация входных данных
 // langOptions: https://github.com/go-playground/validator/tree/master/translations
-func (v *validate) Validation(data any, langOptions ...string) []error {
-	trans, lang := v.registerTranslate(langOptions...)
+func (v *validate) Validation(data any, langOption ...string) []error {
+	langString := langDefault
+	if len(langOption) > 0 {
+		langString = langOption[0]
+	}
+
+	trans, lang := v.registerTranslate(langString)
 
 	v.registerAndTranslateCustomValidation(trans, lang)
 
@@ -80,13 +97,9 @@ func (v *validate) Validation(data any, langOptions ...string) []error {
 //	   Name string `json:"name" validate:"required" <имя>:"Имя"`
 //	   Age  int    `json:"age" validate:"required" <имя>:"ru:Возраст;en:Age;fr:Ajy"`
 //	}
-func (v *validate) RegisterTagName(name ...string) Validate {
-	if len(name) == 0 {
-		name[0] = defaultTagName
-	}
-
+func (v *validate) RegisterTagName(name string) Validate {
 	v.Validate.RegisterTagNameFunc(func(field reflect.StructField) string {
-		tag := field.Tag.Get(name[0])
+		tag := field.Tag.Get(name)
 		if tag == "-" {
 			return ""
 		}
@@ -96,9 +109,9 @@ func (v *validate) RegisterTagName(name ...string) Validate {
 	return v
 }
 
-// RegisterLanguages регистрация пользовательских переводов
-func (v *validate) RegisterLanguages(translators ...locales.Translator) Validate {
-	v.Translators = translators
+// RegisterLocales регистрация пользовательских переводов
+func (v *validate) RegisterLocales(translators ...locales.Translator) Validate {
+	v.Locales = translators
 
 	return v
 }
@@ -110,24 +123,15 @@ func (v *validate) RegisterValidations(customValidates ...CustomValidate) Valida
 	return v
 }
 
-func (v *validate) RegisterLanguagesProcess(lp LanguageProcessor) Validate {
-	v.LanguageProcessors = lp
+func (v *validate) RegisterTranslations(dt DefaultTranslations) Validate {
+	v.Translations = dt
 
 	return v
 }
 
 // registerTranslate регистрация перевода
-func (v *validate) registerTranslate(langOptions ...string) (ut.Translator, string) {
-	lang := langDefault
-	if len(langOptions) > 0 {
-		lang = langOptions[0]
-	}
-
-	if len(v.Translators) == 0 {
-		v.Translators = append(v.Translators, ru.New())
-	}
-
-	uni := ut.New(v.Translators[0], v.Translators...)
+func (v *validate) registerTranslate(lang string) (ut.Translator, string) {
+	uni := ut.New(v.Locales[0], v.Locales...)
 
 	trans, ok := uni.GetTranslator(lang)
 	if !ok {
@@ -136,7 +140,7 @@ func (v *validate) registerTranslate(langOptions ...string) (ut.Translator, stri
 		trans, _ = uni.GetTranslator(lang)
 	}
 
-	if err := v.LanguageProcessors[lang](v.Validate, trans); err != nil {
+	if err := v.Translations[lang](v.Validate, trans); err != nil {
 		log.Warn("Не удалось зарегистрировать перевод", slog.String("err", err.Error()))
 	}
 
@@ -185,7 +189,7 @@ func (v *validate) registerAndTranslateCustomValidation(trans ut.Translator, lan
 			},
 		)
 		if err != nil {
-			log.Warn("Не удалось зарегистрировать пользовательскую валидацию", slog.String("err", err.Error()))
+			log.Warn("Не удалось перевести пользовательскую валидацию", slog.String("err", err.Error()))
 		}
 	}
 }

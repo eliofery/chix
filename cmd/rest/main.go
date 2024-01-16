@@ -31,14 +31,14 @@ func main() {
 	db := database.MustConnect(postgres.New(conf))
 	valid := chix.NewValidate(validator.New()).
 		RegisterTagName("label").
-		RegisterLanguages(
-			en.New(),
+		RegisterLocales(
 			ru.New(),
+			en.New(),
 			fr.New(),
 		).
-		RegisterLanguagesProcess(chix.LanguageProcessor{
-			"en": en_translations.RegisterDefaultTranslations,
+		RegisterTranslations(chix.DefaultTranslations{
 			"ru": ru_translations.RegisterDefaultTranslations,
+			"en": en_translations.RegisterDefaultTranslations,
 			"fr": fr_translations.RegisterDefaultTranslations,
 		}).
 		RegisterValidations(

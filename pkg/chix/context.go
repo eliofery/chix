@@ -48,7 +48,7 @@ func (ctx *Ctx) ContentType(ct string) *Ctx {
 }
 
 // Decode декодирование тела запроса
-func (ctx *Ctx) Decode(data any, langOptions ...string) error {
+func (ctx *Ctx) Decode(data any, langOption ...string) error {
 	err := json.NewDecoder(ctx.Request.Body).Decode(data)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -60,7 +60,7 @@ func (ctx *Ctx) Decode(data any, langOptions ...string) error {
 	}
 
 	if ctx.Validate != nil {
-		if errMessages := ctx.Validate.Validation(data, langOptions...); errMessages != nil {
+		if errMessages := ctx.Validate.Validation(data, langOption...); errMessages != nil {
 			ctx.Status(http.StatusBadRequest)
 			return errors.Join(errMessages...)
 		}
