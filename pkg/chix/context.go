@@ -48,8 +48,8 @@ func (ctx *Ctx) ContentType(ct string) *Ctx {
 }
 
 // Decode декодирование тела запроса
-func (ctx *Ctx) Decode(out any) error {
-	err := json.NewDecoder(ctx.Request.Body).Decode(out)
+func (ctx *Ctx) Decode(data any, langOptions ...string) error {
+	err := json.NewDecoder(ctx.Request.Body).Decode(data)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return errors.New("пустое тело запроса")
@@ -59,11 +59,18 @@ func (ctx *Ctx) Decode(out any) error {
 		return err
 	}
 
+	if ctx.Validate != nil {
+		if errMessages := ctx.Validate.Validation(data, langOptions...); errMessages != nil {
+			ctx.Status(http.StatusBadRequest)
+			return errors.Join(errMessages...)
+		}
+	}
+
 	return nil
 }
 
 // JSON формирование json ответа
-func (ctx *Ctx) JSON(data Map, langOptions ...string) error {
+func (ctx *Ctx) JSON(data Map) error {
 	ctx.ContentType("application/json")
 	ctx.ResponseWriter.WriteHeader(ctx.status)
 
@@ -72,13 +79,6 @@ func (ctx *Ctx) JSON(data Map, langOptions ...string) error {
 	if err := encoder.Encode(data); err != nil {
 		log.Error("Не удалось сформировать json", slog.String("err", err.Error()))
 		return err
-	}
-
-	if ctx.Validate != nil {
-		if errMessages := ctx.Validate.Validation(data, langOptions...); len(errMessages) > 0 {
-			ctx.Status(http.StatusBadRequest)
-			return errors.Join(errMessages...)
-		}
 	}
 
 	return nil

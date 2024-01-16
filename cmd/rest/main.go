@@ -6,6 +6,7 @@ import (
 	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/internal/app/service"
 	"github.com/eliofery/go-chix/internal/route"
+	"github.com/eliofery/go-chix/internal/validation"
 	"github.com/eliofery/go-chix/pkg/chix"
 	"github.com/eliofery/go-chix/pkg/config"
 	"github.com/eliofery/go-chix/pkg/config/viperr"
@@ -14,10 +15,13 @@ import (
 	"github.com/eliofery/go-chix/pkg/jwt"
 	"github.com/eliofery/go-chix/pkg/log"
 	"github.com/eliofery/go-chix/pkg/utils"
-	"github.com/eliofery/go-chix/pkg/validate"
 	"github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/fr"
 	"github.com/go-playground/locales/ru"
 	"github.com/go-playground/validator/v10"
+	en_translations "github.com/go-playground/validator/v10/translations/en"
+	fr_translations "github.com/go-playground/validator/v10/translations/fr"
+	ru_translations "github.com/go-playground/validator/v10/translations/ru"
 )
 
 func main() {
@@ -25,7 +29,21 @@ func main() {
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))
-	valid := validate.New(validator.New(), ru.New(), en.New())
+	valid := chix.NewValidate(validator.New()).
+		RegisterTagName("label").
+		RegisterLanguages(
+			en.New(),
+			ru.New(),
+			fr.New(),
+		).
+		RegisterLanguagesProcess(chix.LanguageProcessor{
+			"en": en_translations.RegisterDefaultTranslations,
+			"ru": ru_translations.RegisterDefaultTranslations,
+			"fr": fr_translations.RegisterDefaultTranslations,
+		}).
+		RegisterValidations(
+			validation.TestValidate(),
+		)
 	tokenManager := jwt.NewTokenManager(conf)
 
 	dao := repository.NewDAO(db.Conn)
