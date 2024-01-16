@@ -100,3 +100,31 @@ func (ctx *Ctx) Next() error {
 
 	return nil
 }
+
+// Locals добавление/получение данных в контексте
+func (ctx *Ctx) Locals(key any, value ...any) any {
+	if len(value) == 0 {
+		return ctx.Value(key)
+	}
+
+	context.WithValue(ctx, key, value[0])
+
+	return value[0]
+}
+
+// Get получить содержимое заголовка
+func (ctx *Ctx) Get(key string, defaultValue ...string) string {
+	header := ctx.Request.Header.Get(key)
+
+	if len(header) == 0 {
+		log.Debug("Заголовок не найден", slog.Any("header", key))
+
+		if len(defaultValue) == 0 {
+			return ""
+		}
+
+		return defaultValue[0]
+	}
+
+	return header
+}

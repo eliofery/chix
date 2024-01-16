@@ -24,13 +24,14 @@ func (ctx *Ctx) Cookie(cookie *http.Cookie) {
 
 // Cookies получение куки
 func (ctx *Ctx) Cookies(name string, defaultValue ...string) string {
-	if len(name) == 0 && len(defaultValue) > 0 {
-		return defaultValue[0]
-	}
-
 	cookie, err := ctx.Request.Cookie(name)
 	if err != nil {
 		log.Debug("Cookie не найдено", slog.Any("cookie", name))
+
+		if len(defaultValue) == 0 {
+			return ""
+		}
+
 		return defaultValue[0]
 	}
 

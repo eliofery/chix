@@ -10,8 +10,9 @@ var defaultFormat = squirrel.Dollar
 
 // DAO интерфейс для обращения к БД
 type DAO interface {
-	NewAuthQuery() AuthQuery // NewAuthQuery конструктор для запросов связанных с авторизацией
-	NewUserQuery() UserQuery // NewAuthQuery конструктор для запросов связанных с авторизацией
+	NewAuthQuery() AuthQuery       // NewAuthQuery конструктор для запросов связанных с авторизацией
+	NewUserQuery() UserQuery       // NewAuthQuery конструктор для запросов связанных с авторизацией
+	NewSessionQuery() SessionQuery // NewSessionQuery конструктор для запросов связанных с сессиями
 }
 
 type dao struct {
@@ -42,4 +43,9 @@ func (d *dao) NewUserQuery() UserQuery {
 	log.Debug("Инициализация UserQuery")
 
 	return &userQuery{db: d.db, builder: d.queryBuilder()}
+}
+
+// NewSessionQuery запросы в базу данных для сессий
+func (d *dao) NewSessionQuery() SessionQuery {
+	return &sessionQuery{db: d.db}
 }

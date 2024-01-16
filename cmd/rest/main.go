@@ -29,6 +29,7 @@ func main() {
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))
+	tokenManager := jwt.NewTokenManager(conf)
 	valid := chix.NewValidate(validator.New()).
 		RegisterTagName("label").
 		RegisterLocales(
@@ -44,7 +45,6 @@ func main() {
 		RegisterValidations(
 			validation.TestValidate(),
 		)
-	tokenManager := jwt.NewTokenManager(conf)
 
 	dao := repository.NewDAO(db.Conn)
 	handler := controller.NewServiceController(
@@ -57,6 +57,7 @@ func main() {
 		UseExtends(valid).
 		UseMiddlewares(
 			middleware.Cors(conf),
+			middleware.SetUserIdFromToken(dao, tokenManager),
 			middleware.Example(),
 		).
 		UseRoutes(
