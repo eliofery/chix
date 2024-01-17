@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 // Map шаблон для передачи данных
@@ -59,6 +60,10 @@ func (ctx *Ctx) ContentType(ct string) *Ctx {
 
 // Decode декодирование тела запроса
 func (ctx *Ctx) Decode(data any, langOption ...string) error {
+	if len(langOption) == 0 {
+		langOption = append(langOption, ctx.getActualLang())
+	}
+
 	err := json.NewDecoder(ctx.Request.Body).Decode(data)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -127,4 +132,23 @@ func (ctx *Ctx) Get(key string, defaultValue ...string) string {
 	}
 
 	return header
+}
+
+// langDetected получение языка
+func (ctx *Ctx) getActualLang() string {
+	langHeader := ctx.Get("Accept-Language")
+
+	if len(langHeader) == 0 {
+		return ""
+	}
+
+	for _, group := range strings.Split(langHeader, ";") {
+		for _, lang := range strings.Split(group, ",") {
+			if len(lang) == 2 {
+				return lang
+			}
+		}
+	}
+
+	return ""
 }
