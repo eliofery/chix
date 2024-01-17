@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	portDefault = 5432
+	portDefault    = 5432
+	sslmodeDefault = "disable"
 )
 
 // Postgres база данных Postgres
@@ -39,13 +40,18 @@ func New(config config.Config) Postgres {
 		port = portDefault
 	}
 
+	sslmode := config.Get("postgres.sslmode")
+	if sslmode == "" {
+		sslmode = sslmodeDefault
+	}
+
 	return &postgres{
 		Host:     config.Get("postgres.host"),
 		Port:     port,
 		User:     config.Get("postgres.user"),
 		Password: config.Get("postgres.password"),
 		Database: config.Get("postgres.database"),
-		SSLMode:  config.Get("postgres.sslmode"),
+		SSLMode:  sslmode,
 	}
 }
 

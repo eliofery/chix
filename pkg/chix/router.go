@@ -13,11 +13,8 @@ import (
 	"time"
 )
 
-// HandlerCtx обработчик, контроллер
-type HandlerCtx func(ctx *Ctx) error
-
-// HandlerNext обработчик промежуточного программного обеспечения
-type HandlerNext func(next http.Handler) http.Handler
+// Handler обработчик, контроллер
+type Handler func(ctx *Ctx) error
 
 // Router обертка над chi роутером
 type Router struct {
@@ -38,79 +35,79 @@ func NewRouter(validate Validate) *Router {
 }
 
 // handleCtx запускает обработчик роутера
-func (rt *Router) handlerCtx(handler HandlerCtx, w http.ResponseWriter, r *http.Request) {
-	ctxRoute := NewCtx(w, r, rt.Validate)
+func (rt *Router) handler(handler Handler, w http.ResponseWriter, r *http.Request) {
+	ctx := NewCtx(w, r, rt.Validate)
 
-	if err := handler(ctxRoute); err != nil {
-		err = ctxRoute.JSON(Map{
+	if err := handler(ctx); err != nil {
+		err = ctx.JSON(Map{
 			"success": false,
 			"message": utils.FirstToUpper(err.Error()),
 		})
 		if err != nil {
-			log.Error("Не удалось обработать запрос", slog.String("handlerCtx", err.Error()))
-			http.Error(ctxRoute.ResponseWriter, "Не предвиденная ошибка", http.StatusInternalServerError)
+			log.Error("Не удалось обработать запрос", slog.String("handler", err.Error()))
+			http.Error(ctx.ResponseWriter, "Не предвиденная ошибка", http.StatusInternalServerError)
 		}
 	}
 }
 
 // Get запрос на получение данных
-func (rt *Router) Get(path string, handler HandlerCtx) {
+func (rt *Router) Get(path string, handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // Post запрос на сохранение данных
-func (rt *Router) Post(path string, handler HandlerCtx) {
+func (rt *Router) Post(path string, handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.Post(path, func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // Put запрос на обновление всех данных
-func (rt *Router) Put(path string, handler HandlerCtx) {
+func (rt *Router) Put(path string, handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.Put(path, func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // Patch запрос на обновление конкретных данных
-func (rt *Router) Patch(path string, handler HandlerCtx) {
+func (rt *Router) Patch(path string, handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.Patch(path, func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // Delete запрос на удаление данных
-func (rt *Router) Delete(path string, handler HandlerCtx) {
+func (rt *Router) Delete(path string, handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.Delete(path, func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // NotFound обрабатывает 404 ошибку
-func (rt *Router) NotFound(handler HandlerCtx) {
+func (rt *Router) NotFound(handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // MethodNotAllowed обрабатывает 405 ошибку
-func (rt *Router) MethodNotAllowed(handler HandlerCtx) {
+func (rt *Router) MethodNotAllowed(handler Handler) {
 	rt.statistic["routes"]++
 	rt.Mux.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		rt.handlerCtx(handler, w, r)
+		rt.handler(handler, w, r)
 	})
 }
 
 // Use добавляет промежуточное программное обеспечение
-func (rt *Router) Use(handlers ...HandlerCtx) {
+func (rt *Router) Use(handlers ...Handler) {
 	for _, handler := range handlers {
 		rt.statistic["middlewares"]++
 
@@ -120,7 +117,7 @@ func (rt *Router) Use(handlers ...HandlerCtx) {
 				ctx := r.Context()
 				ctx = WithNextHandler(ctx, next)
 
-				rt.handlerCtx(currentHandler, w, r.WithContext(ctx))
+				rt.handler(currentHandler, w, r.WithContext(ctx))
 			})
 		})
 	}

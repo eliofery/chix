@@ -5,7 +5,7 @@ import (
 	"github.com/eliofery/go-chix/pkg/log"
 )
 
-func Example() chix.HandlerCtx {
+func Example() chix.Handler {
 	log.Debug("Инициализация middleware Example")
 
 	return func(ctx *chix.Ctx) error {

@@ -12,7 +12,7 @@ const defaultCorsMaxAge = 3600 // 1 час
 
 // Cors настройки межсайтового взаимодействия
 // Пример: https://github.com/go-chi/cors?tab=readme-ov-file#usage
-func Cors(conf config.Config) chix.HandlerCtx {
+func Cors(conf config.Config) chix.Handler {
 	log.Debug("Инициализация middleware Cors")
 
 	return func(ctx *chix.Ctx) error {

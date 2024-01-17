@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	version     = "1.0.0"
-	urlDefault  = "127.0.0.1"
-	portDefault = "3000"
+	version         = "1.0.0"
+	protocolDefault = "http"
+	urlDefault      = "127.0.0.1"
+	portDefault     = "3000"
 )
 
 // Тип key ключ контекста
@@ -29,7 +30,7 @@ type key string
 type App struct {
 	config      config.Config
 	db          *database.DB
-	middlewares []HandlerCtx
+	middlewares []Handler
 	routes      []func(router *Router)
 	validate    Validate
 }
@@ -61,7 +62,7 @@ func (a *App) UseExtends(extends ...any) *App {
 }
 
 // UseMiddlewares использование промежуточное программное обеспечение
-func (a *App) UseMiddlewares(middlewares ...HandlerCtx) *App {
+func (a *App) UseMiddlewares(middlewares ...Handler) *App {
 	log.Debug("Регистрация middlewares")
 
 	a.middlewares = append(a.middlewares, middlewares...)
@@ -105,7 +106,7 @@ func (a *App) MustRun() {
 }
 
 // RegisterMiddlewares регистрация промежуточного программного обеспечения
-func (a *App) registerMiddlewares(r *Router, middlewares []HandlerCtx) {
+func (a *App) registerMiddlewares(r *Router, middlewares []Handler) {
 	r.Use(middlewares...)
 }
 
@@ -118,17 +119,7 @@ func (a *App) registerRoutes(r *Router, routes []func(router *Router)) {
 
 // MustListen регистрация маршрутов
 func (a *App) listen(r *Router) error {
-	port := a.config.Get("http.port")
-	if port == "" {
-		port = portDefault
-	}
-
-	url := a.config.Get("http.url")
-	if url == "" {
-		url = urlDefault
-	}
-
-	return r.Listen(fmt.Sprintf("%s:%s", url, port))
+	return r.Listen(fmt.Sprintf("%s:%s", a.getUrl(), a.getPort()))
 }
 
 // printLogo печать логотипа в терминал
@@ -188,6 +179,33 @@ func (a *App) printLogo(statistic map[string]int) {
 	time.Sleep(time.Millisecond * 100)
 	color.HiYellow(fmt.Sprintf("| PID: %d\n", os.Getpid()))
 	time.Sleep(time.Millisecond * 100)
-	color.HiGreen(fmt.Sprintf("| Сервер: %s://%s:%s\n", a.config.Get("http.protocol"), a.config.Get("http.url"), a.config.Get("http.port")))
+	color.HiGreen(fmt.Sprintf("| Сервер: %s://%s:%s\n", a.getProtocol(), a.getUrl(), a.getPort()))
 	fmt.Println(`+---------------------------------+`)
+}
+
+func (a *App) getProtocol() string {
+	protocol := a.config.Get("http.protocol")
+	if protocol == "" {
+		protocol = protocolDefault
+	}
+
+	return protocol
+}
+
+func (a *App) getUrl() string {
+	url := a.config.Get("http.url")
+	if url == "" {
+		url = urlDefault
+	}
+
+	return url
+}
+
+func (a *App) getPort() string {
+	port := a.config.Get("http.port")
+	if port == "" {
+		port = portDefault
+	}
+
+	return port
 }

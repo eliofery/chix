@@ -15,7 +15,7 @@ var (
 )
 
 // SetUserIdFromToken добавление ID авторизованного пользователя в контекст
-func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.HandlerCtx {
+func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.Handler {
 	return func(ctx *chix.Ctx) error {
 		cookieToken := ctx.Cookies(jwt.CookieTokenName)
 		authToken := ctx.Get("Authorization")
