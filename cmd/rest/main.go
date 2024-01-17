@@ -62,6 +62,7 @@ func main() {
 		).
 		UseRoutes(
 			routes.ErrorRoute,
+			routes.AuthRoute,
 			routes.UserRoute,
 		).
 		MustRun()

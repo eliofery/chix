@@ -5,17 +5,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-// AuthQuery интерфейс для запросов связанных с пользователями
-type AuthQuery interface {
-	Register() // Register регистрация пользователя
-}
+// AuthQuery запросы в базу данных для авторизации пользователей
+type AuthQuery interface{}
 
 type authQuery struct {
 	db      *sql.DB
 	builder squirrel.StatementBuilderType
-}
-
-// Register регистрация пользователя
-func (q *authQuery) Register() {
-	// TODO
 }

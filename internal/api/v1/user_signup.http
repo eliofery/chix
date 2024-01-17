@@ -1,0 +1,13 @@
+### Авторизация нового пользователя
+GET http://127.0.0.1:3000/api/v1/signup
+content-type: application/json
+accept-language: ru
+
+{
+    "first_name": "Robin",
+    "last_name": "Good",
+    "age": 9,
+    "email": "some@user.org",
+    "password": "123",
+    "password_confirm": "123"
+}

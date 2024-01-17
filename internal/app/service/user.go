@@ -8,7 +8,7 @@ import (
 
 // UserService логика работы с пользователями
 type UserService interface {
-	GetUsers() (*[]model.User, error) // GetUsers получение всех пользователей
+	GetUsers() ([]model.User, error) // GetUsers получение всех пользователей
 }
 
 type userService struct {
@@ -23,10 +23,10 @@ func NewUserService(dao repository.DAO) UserService {
 }
 
 // GetUsers получение всех пользователей
-func (s *userService) GetUsers() (*[]model.User, error) {
+func (s *userService) GetUsers() ([]model.User, error) {
 	users, err := s.dao.NewUserQuery().GetUsers()
 	if err != nil {
-		return users, err
+		return nil, err
 	}
 
 	return users, err

@@ -13,6 +13,7 @@ const (
 // Route маршрутизатор
 type Route interface {
 	ErrorRoute(router *chix.Router) // ErrorRoute маршруты для обработки ошибок
+	AuthRoute(router *chix.Router)  // AuthRoute маршруты для авторизации
 	UserRoute(router *chix.Router)  // UserRoute маршруты для пользователей
 }
 

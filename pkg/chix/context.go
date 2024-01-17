@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+const IssuerKey key = "issuer"
+
 // Map шаблон для передачи данных
 type Map map[string]any
 
@@ -109,10 +111,11 @@ func (ctx *Ctx) Next() error {
 // Locals добавление/получение данных в контексте
 func (ctx *Ctx) Locals(key any, value ...any) any {
 	if len(value) == 0 {
-		return ctx.Value(key)
+		return ctx.Request.Context().Value(key)
 	}
 
-	context.WithValue(ctx, key, value[0])
+	saveCtx := context.WithValue(ctx, key, value[0])
+	ctx.Request = ctx.WithContext(saveCtx)
 
 	return value[0]
 }
@@ -151,4 +154,9 @@ func (ctx *Ctx) getActualLang() string {
 	}
 
 	return ""
+}
+
+// GetUserIdFromToken получение идентификатора пользователя
+func (ctx *Ctx) GetUserIdFromToken() int {
+	return ctx.Locals(IssuerKey).(int)
 }

@@ -3,7 +3,10 @@ package model
 const UserTableName = "users"
 
 type User struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	Age  string `json:"age"`
+	ID           int64  `json:"id"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Age          string `json:"age"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"password_hash"`
 }

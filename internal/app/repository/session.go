@@ -8,6 +8,7 @@ import (
 // SessionQuery запросы в базу данных для сессий
 type SessionQuery interface {
 	Create(userId int, token string) error
+	GetIdByToken(token string) (id int, err error)
 	DeleteByToken(token string) error
 	DeleteByUserId(userId int) error
 }
@@ -26,6 +27,19 @@ func (q *sessionQuery) Create(userId int, token string) error {
 	}
 
 	return nil
+}
+
+// GetIdByToken получение ID сессии по токену
+func (q *sessionQuery) GetIdByToken(token string) (int, error) {
+	query := "SELECT id FROM sessions WHERE token = $1"
+
+	var id int
+	err := q.db.QueryRow(query, token).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 // DeleteByToken удаление сессии по токену

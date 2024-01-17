@@ -10,10 +10,6 @@ import (
 	"strconv"
 )
 
-type key string
-
-const IssuerKey key = "issuer"
-
 var (
 	ErrNotAllowed = errors.New("не допустимое действие")
 )
@@ -35,6 +31,13 @@ func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.
 			return ctx.Next()
 		}
 
+		_, err := dao.NewSessionQuery().GetIdByToken(tokenString)
+		if err != nil {
+			tokenManager.RemoveCookieToken(ctx)
+
+			return ctx.Next()
+		}
+
 		issuer, err := tokenManager.VerifyToken(tokenString)
 		if err != nil {
 			tokenManager.RemoveCookieToken(ctx)
@@ -51,7 +54,7 @@ func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.
 			return ctx.Next()
 		}
 
-		ctx.Locals(IssuerKey, userId)
+		ctx.Locals(chix.IssuerKey, userId)
 
 		return ctx.Next()
 	}
@@ -59,8 +62,7 @@ func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.
 
 // IsAuth доступ только для авторизованных пользователей
 func IsAuth(ctx *chix.Ctx) error {
-	_, ok := ctx.Locals(IssuerKey).(int)
-	if !ok {
+	if _, ok := ctx.Locals(chix.IssuerKey).(int); !ok {
 		return ErrNotAllowed
 	}
 
@@ -69,8 +71,7 @@ func IsAuth(ctx *chix.Ctx) error {
 
 // IsGuest доступ только для гостей
 func IsGuest(ctx *chix.Ctx) error {
-	_, ok := ctx.Locals(IssuerKey).(int)
-	if !ok {
+	if _, ok := ctx.Locals(chix.IssuerKey).(int); !ok {
 		return ctx.Next()
 	}
 

@@ -1,18 +1,13 @@
 package controller
 
 import (
-	"github.com/eliofery/go-chix/internal/app/dto"
 	"github.com/eliofery/go-chix/pkg/chix"
 	"net/http"
 )
 
 // GetUsers получение всех пользователей
 func (c ServiceController) GetUsers(ctx *chix.Ctx) error {
-	var user dto.User
-	//if err := ctx.Decode(&user, "fr"); err != nil {
-	//	ctx.Status(http.StatusBadRequest)
-	//	return err
-	//}
+	userId := ctx.GetUserIdFromToken()
 
 	users, err := c.userService.GetUsers()
 	if err != nil {
@@ -21,8 +16,9 @@ func (c ServiceController) GetUsers(ctx *chix.Ctx) error {
 	}
 
 	return ctx.Status(http.StatusOK).JSON(chix.Map{
-		"name":  user.Name,
-		"age":   user.Age,
-		"users": users,
+		"success": true,
+		"message": "пользователи получены",
+		"users":   users,
+		"user_id": userId,
 	})
 }

@@ -2,12 +2,13 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS users
 (
-    id   SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    age  SMALLINT    NOT NULL
+    id            SERIAL PRIMARY KEY,
+    first_name    VARCHAR(50),
+    last_name     VARCHAR(50),
+    age           SMALLINT,
+    email         VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255)       NOT NULL
 );
-
-INSERT INTO users (name, age) VALUES ('John', 30), ('Jane', 25), ('Bob', 40), ('Alice', 35);
 -- +goose StatementEnd
 
 -- +goose Down
