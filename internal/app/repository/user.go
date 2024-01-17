@@ -9,7 +9,7 @@ import (
 	"log/slog"
 )
 
-// UserQuery интерфейс для запросов связанных с пользователями
+// UserQuery запросы в базу данных для пользователей
 type UserQuery interface {
 	GetUsers() (*[]model.User, error) // GetUsers Получение всех пользователей
 }

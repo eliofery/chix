@@ -71,7 +71,7 @@ func (t *tokenManager) VerifyToken(token string) (issuer string, err error) {
 		return []byte(t.conf.Get("jwt.secret")), nil
 	})
 	if err != nil || !parsedToken.Valid {
-		log.Error("Не верный токен", slog.String("err", err.Error()))
+		log.Debug("Не верный токен", slog.String("err", err.Error()))
 		return "", err
 	}
 

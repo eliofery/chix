@@ -127,14 +127,14 @@ func (rt *Router) Use(handlers ...HandlerCtx) {
 }
 
 // Group группирует роутеры
-func (rt *Router) Group(fn func(r *Router)) Router {
+func (rt *Router) Group(fn func(r *Router)) *Router {
 	im := rt.With()
 
 	if fn != nil {
 		fn(&im)
 	}
 
-	return im
+	return &im
 }
 
 // With добавляет встроенное промежуточное программное обеспечение для обработчика конечной точки
@@ -148,18 +148,25 @@ func (rt *Router) With(middlewares ...func(http.Handler) http.Handler) Router {
 }
 
 // Route создает вложенность роутеров
-func (rt *Router) Route(pattern string, fn func(r *Router)) *chi.Mux {
-	subRouter := Router{
+func (rt *Router) Route(pattern string, fn func(r *Router)) *Router {
+	subRouter := &Router{
 		Mux:      chi.NewRouter(),
 		Validate: rt.Validate,
 
 		statistic: rt.statistic,
 	}
 
-	fn(&subRouter)
-	rt.Mux.Mount(pattern, subRouter.Mux)
+	fn(subRouter)
+	rt.Mount(pattern, subRouter)
 
-	return subRouter.Mux
+	return subRouter
+}
+
+// Mount добавляет вложенность роутеров
+func (rt *Router) Mount(pattern string, router *Router) {
+	rt.Mux.Mount(pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		router.Mux.ServeHTTP(w, r)
+	}))
 }
 
 // ServeHTTP возвращает весь пул роутеров

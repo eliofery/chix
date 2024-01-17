@@ -10,11 +10,12 @@ import (
 func (r *route) UserRoute(router *chix.Router) {
 	log.Debug("Инициализация UserRoute")
 
-	router.Group(func(rt *chix.Router) {
-		rt.Use(middleware.IsAuth)
+	api := apiV1 + "/users"
 
-		rt.Route(apiV1, func(rt *chix.Router) {
-			rt.Get("/users", r.Handler.GetUsers)
+	router.Route(api, func(rt *chix.Router) {
+		rt.Group(func(rt *chix.Router) {
+			rt.Use(middleware.IsAuth)
+			rt.Get("/", r.Handler.GetUsers)
 		})
 	})
 }
