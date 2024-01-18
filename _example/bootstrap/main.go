@@ -1,5 +1,11 @@
 package main
 
+import (
+    en_translations "github.com/go-playground/validator/v10/translations/en"
+    fr_translations "github.com/go-playground/validator/v10/translations/fr"
+    ru_translations "github.com/go-playground/validator/v10/translations/ru"
+)
+
 func main() {
     // 1. Определение основных зависимостей микросервиса.
     // Первым делом необходимо инициализировать все основные зависимости.
@@ -37,18 +43,18 @@ func main() {
 		// По умолчанию используется название метки "name", но в случае необходимости его можно переопределить.
 		// Пример:
 		// type UserSignUp struct {
-		//    FirstName string `json:"first_name" label:"Имя"`
+		//    FirstName string `json:"first_name" label:""`
 		//    LastName  string `json:"last_name"  label:"Фамилия"`
 		// }
 		// Теперь при ошибки валидации будет выведено сообщение:
 		// "Имя обязательное поле", вместо "FirstName обязательное поле".
-		RegisterTagName("label").
+		UseTagName("label").
 		// Регистрация используемых языков.
 		// При валидации данных используется русский язык по умолчанию.
 		// При необходимости можно использовать другие языки.
 		// Первый язык в порядке очереди будет зарегистрирован как основной, остальные будут дополнительными.
 		// Так же на ряду с используемыми языками нужно регистрировать переводы (см. ниже).
-		RegisterLocales(
+		UseLocales(
 			ru.New(),
 			en.New(),
 			fr.New(),
@@ -60,13 +66,13 @@ func main() {
 		// Чтобы это исправить нужно изменить значение метки в структуре валидируемых данных.
 		// Пример:
 		// type UserSignUp struct {
-		//    FirstName string `json:"first_name" label:"ru:Имя;en:Name;fr:Nom"`
-		//    LastName  string `json:"last_name"  label:"ru:Фамилия;en:Surname;fr:Nom de famille"`
+		//    FirstName string `json:"first_name" label:"[ru:Имя;en:Name;fr:Nom]"`
+		//    LastName  string `json:"last_name"  label:"[ru:Фамилия;en:Surname;fr:Nom de famille]"`
 		// }
         // Теперь при ошибке валидации будет выведено сообщение согласно необходимому переводу.
         // По умолчанию язык локали берется из шапки запроса: Accept-Language.
         // Так же можно вручную определять нужный язык локали, будет рассмотрено в дальнейшем.
-		RegisterTranslations(chix.DefaultTranslations{
+		UseTranslations(chix.DefaultTranslations{
 			"ru": ru_translations.RegisterDefaultTranslations,
 			"en": en_translations.RegisterDefaultTranslations,
 			"fr": fr_translations.RegisterDefaultTranslations,
@@ -76,7 +82,7 @@ func main() {
         // https://github.com/go-playground/validator/?tab=readme-ov-file#fields
         // При необходимости можно регистрировать пользовательские валидаторы.
         // Пример реализации будет рассмотрен в дальнейшем.
-		RegisterValidations(
+		UseValidations(
 			validation.TestValidate(),
 			validation.FooValidate(),
             validation.BarValidate(),

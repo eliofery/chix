@@ -34,18 +34,19 @@ type DefaultTranslations map[string]func(v *validator.Validate, trans ut.Transla
 
 // Validate валидация данных
 type Validate interface {
-	Validation(data any, langOption ...string) []error              // Валидация входных данных
-	RegisterTagName(name string) Validate                           // Регистрация имени поля в структуре данных
-	RegisterLocales(translators ...locales.Translator) Validate     // Регистрация переводов
-	RegisterValidations(customValidates ...CustomValidate) Validate // Регистрация пользовательских валидации
-	RegisterTranslations(dt DefaultTranslations) Validate           // Регистрация функций перевода
+	Validation(data any, langOption ...string) []error
+	UseTagName(name string) Validate
+	UseLocales(translators ...locales.Translator) Validate
+	UseValidations(customValidates ...CustomValidate) Validate
+	UseTranslations(dt DefaultTranslations) Validate
 }
-
 type validate struct {
-	*validator.Validate                                                                   // Validate Валидатор
-	Locales             []locales.Translator                                              // Locales переводы
-	Validations         []CustomValidate                                                  // Validations пользовательские валидации
-	Translations        map[string]func(v *validator.Validate, trans ut.Translator) error // Translations функции перевода
+	*validator.Validate
+	Locales      []locales.Translator
+	Validations  []CustomValidate
+	Translations map[string]func(v *validator.Validate, trans ut.Translator) error
+
+	tagName string // tagName имя тега
 }
 
 // NewValidate создание валидации
@@ -55,9 +56,9 @@ func NewValidate(v *validator.Validate) Validate {
 	var vd validate
 	vd.Validate = v
 
-	vd.RegisterTagName(defaultTagName)
-	vd.RegisterLocales(defaultLanguage)
-	vd.RegisterTranslations(DefaultTranslations{
+	vd.UseTagName(defaultTagName)
+	vd.UseLocales(defaultLanguage)
+	vd.UseTranslations(DefaultTranslations{
 		"ru": ru_translations.RegisterDefaultTranslations,
 	})
 
@@ -74,13 +75,34 @@ func (v *validate) Validation(data any, langOption ...string) []error {
 
 	trans, lang := v.registerTranslate(langString)
 
-	v.registerAndTranslateCustomValidation(trans, lang)
+	v.registerCustomValidation(trans, lang)
 
+	// Данный код переводит сообщение об ошибке в соответствии с текущим языком
+	// Сам по себе валидатор переводит только сообщение об ошибке без самих полей
+	// Пример: Password обязательное поле
+	// При связанных полях перевод выглядит еще не корректней
+	// Пример: Password должен быть равен PasswordConfirm
+	// Данную проблему можно было решить переопределив стандартные валидаторы пользовательскими
+	// Но это сложно, долго и не удобно. Данная реализация автоматизирует процесс перевода
+	// Так же ни кто не мешает переопределять стандартные валидаторы если это необходимо
+	// Все по прежнему будет работать
 	var validatorErr validator.ValidationErrors
 	if err := v.Validate.Struct(data); err != nil && errors.As(err, &validatorErr) {
 		var errMessages []error
 		for _, validateErr := range validatorErr {
-			errMessage := errors.New(validateErr.Translate(trans))
+			translateError := validateErr.Translate(trans)
+			field, message := v.parseErrorMessage(translateError, lang)
+
+			associateField := v.equivalentField(data)
+			param := validateErr.Param()
+			transcription := associateField[param]
+			eqfield, _ := v.parseErrorMessage(transcription, lang)
+			if eqfield == "" {
+				eqfield = transcription
+			}
+			messageReplace := strings.Replace(message, param, eqfield, 1)
+
+			errMessage := errors.New(field + "" + messageReplace)
 			errMessages = append(errMessages, errMessage)
 		}
 
@@ -90,40 +112,44 @@ func (v *validate) Validation(data any, langOption ...string) []error {
 	return nil
 }
 
-// RegisterTagName регистрация имени поля в структуре данных
+// UseTagName регистрация имени поля в структуре данных
 // Пример:
 //
 //	type User struct {
 //	   Name string `json:"name" validate:"required" <имя>:"Имя"`
-//	   Age  int    `json:"age" validate:"required" <имя>:"ru:Возраст;en:Age;fr:Ajy"`
+//	   Age  int    `json:"age" validate:"required" <имя>:"[ru:Возраст;en:Age;fr:Ajy]"`
 //	}
-func (v *validate) RegisterTagName(name string) Validate {
+func (v *validate) UseTagName(name string) Validate {
 	v.Validate.RegisterTagNameFunc(func(field reflect.StructField) string {
 		tag := field.Tag.Get(name)
 		if tag == "-" {
 			return ""
 		}
+
+		v.tagName = name
+
 		return tag
 	})
 
 	return v
 }
 
-// RegisterLocales регистрация пользовательских переводов
-func (v *validate) RegisterLocales(translators ...locales.Translator) Validate {
-	v.Locales = translators
+// UseLocales использование языков
+func (v *validate) UseLocales(locales ...locales.Translator) Validate {
+	v.Locales = locales
 
 	return v
 }
 
-// RegisterValidations регистрация пользовательской валидации
-func (v *validate) RegisterValidations(customValidates ...CustomValidate) Validate {
+// UseValidations использование пользовательских валидаций
+func (v *validate) UseValidations(customValidates ...CustomValidate) Validate {
 	v.Validations = customValidates
 
 	return v
 }
 
-func (v *validate) RegisterTranslations(dt DefaultTranslations) Validate {
+// UseTranslations использование переводов
+func (v *validate) UseTranslations(dt DefaultTranslations) Validate {
 	v.Translations = dt
 
 	return v
@@ -147,8 +173,8 @@ func (v *validate) registerTranslate(lang string) (ut.Translator, string) {
 	return trans, lang
 }
 
-// registerAndTranslateCustomValidation регистрация и перевод пользовательской валидации
-func (v *validate) registerAndTranslateCustomValidation(trans ut.Translator, lang string) {
+// registerCustomValidation регистрация пользовательской валидации
+func (v *validate) registerCustomValidation(trans ut.Translator, lang string) {
 	for _, cv := range v.Validations {
 		if err := v.Validate.RegisterValidation(cv.Tag, cv.Func); err != nil || cv.Message[lang] == "" {
 			log.Warn("Не удалось зарегистрировать пользовательскую валидацию", slog.String("err", err.Error()))
@@ -165,26 +191,12 @@ func (v *validate) registerAndTranslateCustomValidation(trans ut.Translator, lan
 				return ut.Add(cv.Tag, cv.Message[lang], true)
 			},
 
-			// перевод для значения имени поля зарегистрированное через RegisterTagName
-			// поля должны иметь формат: "ru:Возраст;en:Age;fr:Ajy" или "Возраст"
+			// перевод для значения имени поля зарегистрированное через UseTagName
+			// поля должны иметь формат: "[ru:Возраст;en:Age;fr:Ajy]" или "Возраст"
 			func(ut ut.Translator, fe validator.FieldError) string {
-				fields := make(map[string]string)
+				translations, _ := v.parseErrorMessage(fe.Field(), lang)
 
-				langs := strings.Split(fe.Field(), ";")
-				for _, l := range langs {
-					parts := strings.Split(l, ":")
-
-					if len(parts) == 2 {
-						name := strings.TrimSpace(parts[0])
-						value := strings.TrimSpace(parts[1])
-
-						fields[name] = value
-					} else {
-						fields[lang] = fe.Field()
-					}
-				}
-
-				t, _ := ut.T(cv.Tag, fields[lang])
+				t, _ := ut.T(cv.Tag, translations)
 				return t
 			},
 		)
@@ -192,4 +204,76 @@ func (v *validate) registerAndTranslateCustomValidation(trans ut.Translator, lan
 			log.Warn("Не удалось перевести пользовательскую валидацию", slog.String("err", err.Error()))
 		}
 	}
+}
+
+// parseErrorMessage разбирает текст ошибки на поле и сообщение
+// [ru:Пароль;en:Password;fr:Pass] обязательное поле -> "Пароль", "обязательное поле"
+func (v *validate) parseErrorMessage(errString, lang string) (string, string) {
+	separator := "]"
+	closeBracketIndex := strings.Index(errString, separator)
+
+	var field, message string
+	if closeBracketIndex != -1 {
+		field = v.parseTranslations(errString[1:closeBracketIndex], lang)
+		message = errString[closeBracketIndex+1:]
+
+		return field, message
+	}
+
+	return "", errString
+}
+
+// parseTranslations разбивает строку в поисках языка
+// ru:Возраст;en:Age;fr:Ajy -> Возраст или Age или Ajy
+func (v *validate) parseTranslations(translationString, lang string) string {
+	fields := make(map[string]string)
+
+	translations := strings.Split(translationString, ";")
+	if len(translationString) == 0 {
+		return translationString
+	}
+
+	for _, translation := range translations {
+		parts := strings.Split(translation, ":")
+
+		if len(parts) == 2 {
+			name := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+
+			fields[name] = value
+		} else {
+			fields[lang] = translationString
+		}
+	}
+
+	return fields[lang]
+}
+
+// equivalentField ищет в структуре поле на которое ссылается другое поле
+// Пример:
+// Password        string `json:"password" name:"[ru:Пароль;en:Password;fr:Mot de passe]"`
+// PasswordConfirm string `json:"password_confirm" validate:"eqfield=Password" name:"[ru:Подтверждение пароля;en:Password confirmation;fr:Confirmation mot de passe]"`
+//
+//	Сформирует: map["Password":"[ru:Пароль;en:Password;fr:Mot de passe]"]
+func (v *validate) equivalentField(obj any) map[string]string {
+	objValue := reflect.ValueOf(obj)
+	if objValue.Kind() == reflect.Ptr {
+		objValue = objValue.Elem()
+	}
+
+	result := make(map[string]string)
+	objType := objValue.Type()
+
+	for i := 0; i < objValue.NumField(); i++ {
+		field := objType.Field(i).Name
+
+		value := objType.Field(i).Tag.Get(v.tagName)
+		if value == "" {
+			value = objType.Field(i).Name
+		}
+
+		result[field] = value
+	}
+
+	return result
 }
