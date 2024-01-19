@@ -10,40 +10,24 @@ import (
 	"strconv"
 )
 
-var (
-	ErrNotAllowed = errors.New("не допустимое действие")
-)
-
 // SetUserIdFromToken добавление ID авторизованного пользователя в контекст
 func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.Handler {
 	return func(ctx *chix.Ctx) error {
-		cookieToken := ctx.Cookies(jwt.CookieTokenName)
-		authToken := ctx.Get("Authorization")
-
-		var tokenString string
-		if cookieToken != "" {
-			tokenString = cookieToken
-		} else if authToken != "" {
-			tokenString = authToken
-		}
-
-		if tokenString == "" {
+		token := tokenManager.GetToken(ctx)
+		if token == "" {
 			return ctx.Next()
 		}
 
-		_, err := dao.NewSessionQuery().GetIdByToken(tokenString)
-		if err != nil {
+		if err := dao.NewSessionQuery().CheckByToken(token); err != nil {
 			tokenManager.RemoveCookieToken(ctx)
 
 			return ctx.Next()
 		}
 
-		issuer, err := tokenManager.VerifyToken(tokenString)
+		issuer, err := tokenManager.VerifyToken(token)
 		if err != nil {
 			tokenManager.RemoveCookieToken(ctx)
-			if err = dao.NewSessionQuery().DeleteByToken(tokenString); err != nil {
-				log.Error("Не удалось удалить сессионный токен", slog.String("err", err.Error()))
-			}
+			_ = dao.NewSessionQuery().DeleteByToken(token)
 
 			return ctx.Next()
 		}
@@ -51,10 +35,11 @@ func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.
 		userId, err := strconv.Atoi(issuer)
 		if err != nil {
 			log.Error("Не удалось получить идентификатор пользователя", slog.String("err", err.Error()))
+
 			return ctx.Next()
 		}
 
-		ctx.Locals(chix.IssuerKey, userId)
+		ctx.Locals(chix.IssuerKey, int64(userId))
 
 		return ctx.Next()
 	}
@@ -62,8 +47,8 @@ func SetUserIdFromToken(dao repository.DAO, tokenManager jwt.TokenManager) chix.
 
 // IsAuth доступ только для авторизованных пользователей
 func IsAuth(ctx *chix.Ctx) error {
-	if _, ok := ctx.Locals(chix.IssuerKey).(int); !ok {
-		return ErrNotAllowed
+	if ctx.GetUserIdFromToken() == nil {
+		return errors.New("доступ только для авторизованных пользователей")
 	}
 
 	return ctx.Next()
@@ -71,9 +56,9 @@ func IsAuth(ctx *chix.Ctx) error {
 
 // IsGuest доступ только для гостей
 func IsGuest(ctx *chix.Ctx) error {
-	if _, ok := ctx.Locals(chix.IssuerKey).(int); !ok {
+	if ctx.GetUserIdFromToken() == nil {
 		return ctx.Next()
 	}
 
-	return ErrNotAllowed
+	return errors.New("доступ только для не авторизованных пользователей")
 }

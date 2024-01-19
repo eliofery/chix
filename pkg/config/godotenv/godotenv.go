@@ -25,7 +25,7 @@ type goDotEnv struct {
 
 // New конструктор goDotEnv
 func New(configName string) GoDotEnv {
-	log.Debug("инициализация конфигурации GoDotEnv")
+	log.Debug("инициализация конфигурации godotenv")
 
 	configName = fmt.Sprintf("%s.%s", configName, defaultConfigType)
 

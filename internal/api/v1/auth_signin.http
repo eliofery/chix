@@ -1,0 +1,9 @@
+### Авторизация пользователя
+POST http://127.0.0.1:3000/v1/signin
+content-type: application/json
+accept-language: ru
+
+{
+    "email": "some@user.org",
+    "password": "123"
+}

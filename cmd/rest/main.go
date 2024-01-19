@@ -6,7 +6,6 @@ import (
 	"github.com/eliofery/go-chix/internal/app/repository"
 	"github.com/eliofery/go-chix/internal/app/route"
 	"github.com/eliofery/go-chix/internal/app/service"
-	"github.com/eliofery/go-chix/internal/app/validation"
 	"github.com/eliofery/go-chix/pkg/chix"
 	"github.com/eliofery/go-chix/pkg/config"
 	"github.com/eliofery/go-chix/pkg/config/viperr"
@@ -15,13 +14,7 @@ import (
 	"github.com/eliofery/go-chix/pkg/jwt"
 	"github.com/eliofery/go-chix/pkg/log"
 	"github.com/eliofery/go-chix/pkg/utils"
-	"github.com/go-playground/locales/en"
-	"github.com/go-playground/locales/fr"
-	"github.com/go-playground/locales/ru"
 	"github.com/go-playground/validator/v10"
-	en_translations "github.com/go-playground/validator/v10/translations/en"
-	fr_translations "github.com/go-playground/validator/v10/translations/fr"
-	ru_translations "github.com/go-playground/validator/v10/translations/ru"
 )
 
 func main() {
@@ -30,40 +23,23 @@ func main() {
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
 	db := database.MustConnect(postgres.New(conf))
 	tokenManager := jwt.NewTokenManager(conf)
-	valid := chix.NewValidate(validator.New()).
-		RegisterTagName("label").
-		RegisterLocales(
-			ru.New(),
-			en.New(),
-			fr.New(),
-		).
-		RegisterTranslations(chix.DefaultTranslations{
-			"ru": ru_translations.RegisterDefaultTranslations,
-			"en": en_translations.RegisterDefaultTranslations,
-			"fr": fr_translations.RegisterDefaultTranslations,
-		}).
-		RegisterValidations(
-			validation.TestValidate(),
-		)
+	validate := chix.NewValidate(validator.New())
 
 	dao := repository.NewDAO(db.Conn)
 	handler := controller.NewServiceController(
 		service.NewAuthService(dao, tokenManager),
-		service.NewUserService(dao),
 	)
 	routes := route.NewRouter(handler)
 
 	chix.NewApp(db, conf).
-		UseExtends(valid).
+		UseExtends(validate).
 		UseMiddlewares(
 			middleware.Cors(conf),
 			middleware.SetUserIdFromToken(dao, tokenManager),
-			middleware.Example(),
 		).
 		UseRoutes(
 			routes.ErrorRoute,
 			routes.AuthRoute,
-			routes.UserRoute,
 		).
 		MustRun()
 }

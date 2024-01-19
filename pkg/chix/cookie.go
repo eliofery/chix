@@ -41,8 +41,7 @@ func (ctx *Ctx) Cookies(name string, defaultValue ...string) string {
 // ClearCookie удаление куки
 func (ctx *Ctx) ClearCookie(name string) {
 	cookie := ctx.NewCookie(name, "")
-	cookie.MaxAge = -1
 	cookie.Expires = time.Now().Add(-time.Hour)
 
-	http.SetCookie(ctx.ResponseWriter, cookie)
+	ctx.Cookie(cookie)
 }

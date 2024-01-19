@@ -21,7 +21,7 @@ type sqlite struct {
 
 // New конструктор Sqlite
 func New(config config.Config) Sqlite {
-	log.Debug("Инициализация базы данных Sqlite")
+	log.Debug("Инициализация базы данных sqlite")
 
 	return &sqlite{
 		Path: config.Get("sqlite.path"),

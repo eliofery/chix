@@ -68,12 +68,14 @@ func (ctx *Ctx) Decode(data any, langOption ...string) error {
 
 	err := json.NewDecoder(ctx.Request.Body).Decode(data)
 	if err != nil {
+		log.Error("json.NewDecoder", slog.String("err", err.Error()))
+		ctx.Status(http.StatusBadRequest)
+
 		if errors.Is(err, io.EOF) {
 			return errors.New("пустое тело запроса")
 		}
 
-		log.Error("Не удалось сформировать объект", slog.String("err", err.Error()))
-		return err
+		return errors.New("не корректный json")
 	}
 
 	if ctx.Validate != nil {
@@ -89,7 +91,7 @@ func (ctx *Ctx) Decode(data any, langOption ...string) error {
 // JSON формирование json ответа
 func (ctx *Ctx) JSON(data Map) error {
 	ctx.ContentType("application/json")
-	ctx.ResponseWriter.WriteHeader(ctx.status)
+	ctx.WriteHeader(ctx.status)
 
 	encoder := json.NewEncoder(ctx.ResponseWriter)
 	encoder.SetIndent("", "  ")
@@ -157,6 +159,11 @@ func (ctx *Ctx) getActualLang() string {
 }
 
 // GetUserIdFromToken получение идентификатора пользователя
-func (ctx *Ctx) GetUserIdFromToken() int {
-	return ctx.Locals(IssuerKey).(int)
+func (ctx *Ctx) GetUserIdFromToken() *int64 {
+	userId, ok := ctx.Locals(IssuerKey).(int64)
+	if !ok {
+		return nil
+	}
+
+	return &userId
 }

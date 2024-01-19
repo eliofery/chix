@@ -13,15 +13,22 @@ import (
 )
 
 const (
-	CookieTokenName    = "jwt"
+	cookieTokenName    = "jwt"
 	ExpiresTimeDefault = 3600
+)
+
+var (
+	ErrInvalidToken = errors.New("не корректный токен")
 )
 
 // TokenManager jwt токен
 type TokenManager interface {
 	GenerateToken(userId int) (token string, err error)
 	VerifyToken(token string) (issuer string, err error)
-	GetExpiresTime() time.Duration
+	GetExpiresTime() (expires time.Duration)
+	GetCookieToken(ctx *chix.Ctx) (token string)
+	GetHeaderToken(ctx *chix.Ctx) (token string)
+	GetToken(ctx *chix.Ctx) (token string)
 	SetCookieToken(ctx *chix.Ctx, token string)
 	RemoveCookieToken(ctx *chix.Ctx)
 }
@@ -50,7 +57,7 @@ func (t *tokenManager) GenerateToken(userId int) (token string, err error) {
 	token, err = claims.SignedString([]byte(t.conf.Get("jwt.secret")))
 	if err != nil {
 		log.Error("Не удалось создать токен", slog.String("err", err.Error()))
-		return "", err
+		return "", errors.New("ошибка при создании токена")
 	}
 
 	return token, nil
@@ -65,26 +72,26 @@ func (t *tokenManager) VerifyToken(token string) (issuer string, err error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			log.Error("Неожиданный метод подписи токена", slog.String("method", token.Method.Alg()))
-			return nil, errors.New("неожиданный метод подписи токена")
+			return nil, ErrInvalidToken
 		}
 
 		return []byte(t.conf.Get("jwt.secret")), nil
 	})
 	if err != nil || !parsedToken.Valid {
 		log.Debug("Не верный токен", slog.String("err", err.Error()))
-		return "", err
+		return "", ErrInvalidToken
 	}
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok {
 		log.Error("Не верный тип токена", slog.String("err", err.Error()))
-		return "", err
+		return "", ErrInvalidToken
 	}
 
 	issuer, err = claims.GetIssuer()
 	if err != nil {
 		log.Error("Issuer не получен", slog.String("err", err.Error()))
-		return "", err
+		return "", ErrInvalidToken
 	}
 
 	return issuer, nil
@@ -101,11 +108,37 @@ func (t *tokenManager) GetExpiresTime() time.Duration {
 	return time.Duration(expiresTime)
 }
 
+// GetCookieToken получить токен из куки
+func (t *tokenManager) GetCookieToken(ctx *chix.Ctx) string {
+	return ctx.Cookies(cookieTokenName)
+}
+
+// GetHeaderToken получить токен из заголовка
+func (t *tokenManager) GetHeaderToken(ctx *chix.Ctx) string {
+	return ctx.Get("Authorization")
+}
+
+// GetToken получить токен из куки или заголовка
+func (t *tokenManager) GetToken(ctx *chix.Ctx) string {
+	cookieToken := t.GetCookieToken(ctx)
+	if cookieToken != "" {
+		return cookieToken
+	}
+
+	authToken := t.GetHeaderToken(ctx)
+	if authToken != "" {
+		return authToken
+	}
+
+	return ""
+}
+
 // SetCookieToken сохранить токен в куки
 func (t *tokenManager) SetCookieToken(ctx *chix.Ctx, token string) {
 	cookie := http.Cookie{
-		Name:     CookieTokenName,
+		Name:     cookieTokenName,
 		Value:    token,
+		Path:     "/",
 		Expires:  time.Now().Add(time.Second * t.GetExpiresTime()),
 		HttpOnly: true,
 	}
@@ -115,16 +148,14 @@ func (t *tokenManager) SetCookieToken(ctx *chix.Ctx, token string) {
 
 // RemoveCookieToken удалить токен из куки
 func (t *tokenManager) RemoveCookieToken(ctx *chix.Ctx) {
-	ctx.ClearCookie(CookieTokenName)
+	ctx.ClearCookie(cookieTokenName)
 }
 
 // isSecretEmpty проверка секретного ключа
 func (t *tokenManager) isSecretEmpty() error {
-	secret := t.conf.Get("jwt.secret")
-
-	if secret == "" {
+	if secret := t.conf.Get("jwt.secret"); secret == "" {
 		log.Error("Секретный ключ токена не может быть пустым", slog.String("secret", secret))
-		return errors.New("секретный ключ токена пуст")
+		return errors.New("не предвиденная ошибка на стороне сервера")
 	}
 
 	return nil

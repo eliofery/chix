@@ -7,14 +7,13 @@ import (
 )
 
 const (
-	apiV1 = "/api/v1"
+	apiV1 = "/v1"
 )
 
 // Route маршрутизатор
 type Route interface {
-	ErrorRoute(router *chix.Router) // ErrorRoute маршруты для обработки ошибок
-	AuthRoute(router *chix.Router)  // AuthRoute маршруты для авторизации
-	UserRoute(router *chix.Router)  // UserRoute маршруты для пользователей
+	ErrorRoute(*chix.Router)
+	AuthRoute(*chix.Router)
 }
 
 type route struct {

@@ -33,7 +33,7 @@ type postgres struct {
 
 // New конструктор Postgres
 func New(config config.Config) Postgres {
-	log.Debug("Инициализация базы данных Postgres")
+	log.Debug("Инициализация базы данных postgres")
 
 	port, err := strconv.Atoi(config.Get("postgres.port"))
 	if err != nil {

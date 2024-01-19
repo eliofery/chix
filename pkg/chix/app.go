@@ -81,8 +81,6 @@ func (a *App) UseRoutes(routes ...func(router *Router)) *App {
 
 // MustRun запуск приложения с обработкой ошибок
 func (a *App) MustRun() {
-	log.Debug("Запуск сервера")
-
 	defer func() {
 		if err := a.db.Conn.Close(); err != nil {
 			log.Error("Не удалось закрыть соединение с базой данных", slog.String("err", err.Error()))
@@ -98,11 +96,11 @@ func (a *App) MustRun() {
 	a.registerRoutes(server, a.routes)
 	a.printLogo(server.GetStatistic())
 
+	log.Info("Запуск сервера")
 	if err := a.listen(server); err != nil {
 		panic(err)
 	}
-
-	log.Info("Остановка приложения")
+	log.Info("Остановка сервера")
 }
 
 // RegisterMiddlewares регистрация промежуточного программного обеспечения

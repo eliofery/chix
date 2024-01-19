@@ -1,0 +1,4 @@
+### Выход пользователя
+POST http://127.0.0.1:3000/v1/logout
+accept-language: ru
+authorization: token

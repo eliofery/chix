@@ -6,11 +6,10 @@ import (
 	"github.com/eliofery/go-chix/pkg/log"
 )
 
-var defaultFormat = squirrel.Dollar
+var defaultFormat squirrel.PlaceholderFormat = squirrel.Dollar
 
 // DAO интерфейс для обращения к БД
 type DAO interface {
-	NewAuthQuery() AuthQuery
 	NewUserQuery() UserQuery
 	NewSessionQuery() SessionQuery
 }
@@ -21,7 +20,7 @@ type dao struct {
 
 // NewDAO конструктор dao
 func NewDAO(db *sql.DB) DAO {
-	log.Debug("Инициализация DAO")
+	log.Debug("Инициализация dao")
 
 	return &dao{db: db}
 }
@@ -31,21 +30,12 @@ func (d *dao) queryBuilder() squirrel.StatementBuilderType {
 	return squirrel.StatementBuilder.PlaceholderFormat(defaultFormat).RunWith(d.db)
 }
 
-// NewAuthQuery конструктор для запросов связанных с авторизацией
-func (d *dao) NewAuthQuery() AuthQuery {
-	log.Debug("Инициализация AuthQuery")
-
-	return &authQuery{db: d.db, builder: d.queryBuilder()}
-}
-
-// NewUserQuery конструктор для запросов связанных с пользователями
+// NewUserQuery запросы в базу данных связанные с пользователями
 func (d *dao) NewUserQuery() UserQuery {
-	log.Debug("Инициализация UserQuery")
-
-	return &userQuery{db: d.db, builder: d.queryBuilder()}
+	return &userQuery{pgQb: d.queryBuilder()}
 }
 
-// NewSessionQuery запросы в базу данных для сессий
+// NewSessionQuery запросы в базу данных связанные с сессиями
 func (d *dao) NewSessionQuery() SessionQuery {
-	return &sessionQuery{db: d.db}
+	return &sessionQuery{pgQb: d.queryBuilder()}
 }

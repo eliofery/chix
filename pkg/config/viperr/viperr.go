@@ -31,7 +31,7 @@ type viperr struct {
 
 // New конструктор viperr
 func New(configName string, configPaths ...string) Viperr {
-	log.Debug("Инициализация конфигурации Viperr")
+	log.Debug("Инициализация конфигурации viperr")
 
 	paths := []string{defaultConfigPath}
 	if len(configPaths) > 0 {

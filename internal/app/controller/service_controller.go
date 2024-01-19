@@ -8,18 +8,15 @@ import (
 // ServiceController обработчик маршрутов
 type ServiceController struct {
 	authService service.AuthService
-	userService service.UserService
 }
 
 // NewServiceController конструктор
 func NewServiceController(
 	authService service.AuthService,
-	userService service.UserService,
 ) ServiceController {
-	log.Debug("Инициализация ServiceController")
+	log.Debug("Инициализация service controller")
 
 	return ServiceController{
 		authService: authService,
-		userService: userService,
 	}
 }

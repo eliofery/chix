@@ -1,71 +1,91 @@
 package repository
 
 import (
-	"database/sql"
+	"errors"
 	"github.com/Masterminds/squirrel"
 	"github.com/eliofery/go-chix/internal/app/model"
 	"github.com/eliofery/go-chix/pkg/log"
 	"log/slog"
 )
 
-// SessionQuery запросы в базу данных для сессий
+// SessionQuery запросы в базу данных связанные с сессиями
 type SessionQuery interface {
-	Create(userId int, token string) error
-	GetIdByToken(token string) (id int, err error)
-	DeleteByToken(token string) error
-	DeleteByUserId(userId int) error
+	Create(userId int64, token string) error
+	CheckByToken(string) error
+	GetTokenByUserId(userId int64) (token string, err error)
+	DeleteByToken(string) error
+	DeleteByUserId(userId int64) error
 }
 
 type sessionQuery struct {
-	db      *sql.DB
-	builder squirrel.StatementBuilderType
+	pgQb squirrel.StatementBuilderType
 }
 
-// Create создание токена
-func (q *sessionQuery) Create(userId int, token string) error {
-	qb := q.builder.
-		Insert(model.SessionTableName).
+// Create создание сессии
+func (q *sessionQuery) Create(userId int64, token string) error {
+	qb := q.pgQb.Insert(model.SessionTableName).
 		Columns("user_id", "token").
 		Values(userId, token)
 
 	if _, err := qb.Exec(); err != nil {
-		log.Error("Не удалось создать сессионный токен", slog.String("err", err.Error()))
-		return err
+		log.Warn("Ошибка при создании сессии", slog.String("err", err.Error()))
+		return errors.New("сессия не создана")
 	}
 
 	return nil
 }
 
-// GetIdByToken получение ID сессии по токену
-func (q *sessionQuery) GetIdByToken(token string) (int, error) {
-	query := "SELECT id FROM sessions WHERE token = $1"
+// CheckByToken проверка наличия сессии по токену
+func (q *sessionQuery) CheckByToken(token string) error {
+	qb := q.pgQb.Select("user_id").
+		From(model.SessionTableName).
+		Where(squirrel.Eq{"token": token})
 
-	var id int
-	err := q.db.QueryRow(query, token).Scan(&id)
-	if err != nil {
-		return 0, err
+	var userId int64
+	if err := qb.Scan(&userId); err != nil {
+		log.Warn("Ошибка при проверке сессии", slog.String("err", err.Error()))
+		return errors.New("сессия не существует")
 	}
 
-	return id, nil
+	return nil
+}
+
+// GetTokenByUserId получение токена по id пользователя
+func (q *sessionQuery) GetTokenByUserId(userId int64) (string, error) {
+	qb := q.pgQb.Select("token").
+		From(model.SessionTableName).
+		Where(squirrel.Eq{"user_id": userId})
+
+	var token string
+	if err := qb.Scan(&token); err != nil {
+		log.Warn("Ошибка при получении токена по id", slog.String("err", err.Error()))
+		return "", errors.New("токен не существует")
+	}
+
+	return token, nil
 }
 
 // DeleteByToken удаление сессии по токену
 func (q *sessionQuery) DeleteByToken(token string) error {
-	query := "DELETE FROM sessions WHERE token = $1"
-	_, err := q.db.Exec(query, token)
-	if err != nil {
-		return err
+	qb := q.pgQb.Delete(model.SessionTableName).
+		Where(squirrel.Eq{"token": token})
+
+	if _, err := qb.Exec(); err != nil {
+		log.Warn("Ошибка при удалении сессии", slog.String("err", err.Error()))
+		return errors.New("сессия не удалена")
 	}
 
 	return nil
 }
 
-// DeleteByUserId удаление сессии по id пользователя
-func (q *sessionQuery) DeleteByUserId(userId int) error {
-	query := "DELETE FROM sessions WHERE user_id = $1"
-	_, err := q.db.Exec(query, userId)
-	if err != nil {
-		return err
+// DeleteByUserId удаление сессии по идентификатору пользователя
+func (q *sessionQuery) DeleteByUserId(userId int64) error {
+	qb := q.pgQb.Delete(model.SessionTableName).
+		Where(squirrel.Eq{"user_id": userId})
+
+	if _, err := qb.Exec(); err != nil {
+		log.Warn("Ошибка при удалении сессии", slog.String("err", err.Error()))
+		return errors.New("сессия не удалена")
 	}
 
 	return nil
