@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/eliofery/go-chix/internal/app/controller"
 	"github.com/eliofery/go-chix/internal/app/middleware"
 	"github.com/eliofery/go-chix/internal/app/repository"
@@ -17,7 +18,13 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// TODO: изменить логику получение окружения (utils.GetEnv())
+func init() {
+	flag.String("env", "local", "Имя окружения должно соответствовать имени конфигурационного файла")
+}
+
 func main() {
+	flag.Parse()
 	utils.PrintEnv(log.InitLog())
 
 	conf := config.MustInit(viperr.New(utils.GetEnv()))
